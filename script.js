@@ -1,222 +1,235 @@
-// Global State
-let students = JSON.parse(localStorage.getItem('students')) || [];
-let isEditing = false;
-let editingIndex = null;
-
-// Grade Mapping System
-const GRADE_POINTS = {
-    'S': 10,
-    'A': 9,
-    'B': 8,
-    'C': 7,
-    'D': 6,
-    'F': 0
+/************* FIREBASE CONFIG *************/
+const firebaseConfig = {
+  apiKey: "AIzaSyAeY1qM4jux_6_8ZOmc_2dJ7Lc5rU9SeGc",
+  authDomain: "student-dashboard-ba42d.firebaseapp.com",
+  projectId: "student-dashboard-ba42d",
+  storageBucket: "student-dashboard-ba42d.firebasestorage.app",
+  messagingSenderId: "142660458170",
+  appId: "1:142660458170:web:26028e833eb1ded8a85483"
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+/************* INITIALIZE FIREBASE (COMPAT) *************/
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/************* GLOBAL STATE *************/
+let students = [];
+let isEditing = false;
+let editingId = null;
+
+/************* GRADE SYSTEM *************/
+const GRADE_POINTS = {
+  S: 10,
+  A: 9,
+  B: 8,
+  C: 7,
+  D: 6,
+  F: 0
+};
+
+/************* LOAD DATA *************/
+document.addEventListener("DOMContentLoaded", () => {
+  db.collection("students").onSnapshot(snapshot => {
+    students = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     renderTable();
     updateStats();
+  });
 });
 
-// --- Modal Functions ---
-function openModal(editMode = false, index = null) {
-    const modal = document.getElementById('studentModal');
-    const container = document.getElementById('subjects-container');
-    const form = document.getElementById('studentForm');
+/************* MODAL *************/
+function openModal(edit = false, id = null) {
+  document.getElementById("studentModal").style.display = "flex";
+  document.getElementById("subjects-container").innerHTML = "";
 
-    modal.style.display = 'flex';
-    container.innerHTML = ''; // Clear previous subjects
+  if (edit) {
+    isEditing = true;
+    editingId = id;
+    document.getElementById("modalTitle").innerText = "Edit Student";
 
-    if (editMode && index !== null) {
-        isEditing = true;
-        editingIndex = index;
-        document.getElementById('modalTitle').innerText = "Edit Student";
-        
-        const student = students[index];
-        document.getElementById('name').value = student.name;
-        document.getElementById('email').value = student.email;
-        document.getElementById('classVal').value = student.classVal;
-        
-        // Load existing subjects
-        if (student.subjects && student.subjects.length > 0) {
-            student.subjects.forEach(sub => addSubjectField(sub.subName, sub.grade));
-        } else {
-            addSubjectField(); // Add one empty if none exist
-        }
-        calculateGPA(); // Show current GPA
-    } else {
-        isEditing = false;
-        editingIndex = null;
-        document.getElementById('modalTitle').innerText = "Add Student";
-        form.reset();
-        addSubjectField(); // Add one empty row by default
-        document.getElementById('gpa-calc').innerText = "0.0";
-    }
+    const s = students.find(st => st.id === id);
+    document.getElementById("name").value = s.name;
+    document.getElementById("email").value = s.email;
+    document.getElementById("classVal").value = s.classVal;
+
+    s.subjects.forEach(sub =>
+      addSubjectField(sub.subName, sub.grade)
+    );
+    calculateGPA();
+  } else {
+    isEditing = false;
+    editingId = null;
+    document.getElementById("modalTitle").innerText = "Add Student";
+    document.getElementById("studentForm").reset();
+    addSubjectField();
+    document.getElementById("gpa-calc").innerText = "0.0";
+  }
 }
 
 function closeModal() {
-    document.getElementById('studentModal').style.display = 'none';
+  document.getElementById("studentModal").style.display = "none";
 }
 
-window.onclick = function(e) {
-    if (e.target == document.getElementById('studentModal')) closeModal();
-}
+window.onclick = function (e) {
+  if (e.target === document.getElementById("studentModal")) {
+    closeModal();
+  }
+};
 
-// --- Dynamic Subject Logic ---
-function addSubjectField(nameVal = '', gradeVal = 'S') {
-    const container = document.getElementById('subjects-container');
-    const div = document.createElement('div');
-    div.classList.add('subject-row');
-    
-    div.innerHTML = `
-        <input type="text" placeholder="Subject Name" class="sub-name" value="${nameVal}" required>
-        <select class="sub-grade" onchange="calculateGPA()">
-            <option value="S" ${gradeVal === 'S' ? 'selected' : ''}>S (10)</option>
-            <option value="A" ${gradeVal === 'A' ? 'selected' : ''}>A (9)</option>
-            <option value="B" ${gradeVal === 'B' ? 'selected' : ''}>B (8)</option>
-            <option value="C" ${gradeVal === 'C' ? 'selected' : ''}>C (7)</option>
-            <option value="D" ${gradeVal === 'D' ? 'selected' : ''}>D (6)</option>
-            <option value="F" ${gradeVal === 'F' ? 'selected' : ''}>F (0)</option>
-        </select>
-        <button type="button" class="remove-btn" onclick="removeSubject(this)"><i class="fas fa-times"></i></button>
-    `;
-    container.appendChild(div);
-    calculateGPA();
+/************* SUBJECTS *************/
+function addSubjectField(name = "", grade = "S") {
+  const div = document.createElement("div");
+  div.className = "subject-row";
+
+  div.innerHTML = `
+    <input type="text" class="sub-name" placeholder="Subject Name" value="${name}" required>
+    <select class="sub-grade" onchange="calculateGPA()">
+      <option value="S" ${grade === "S" ? "selected" : ""}>S (10)</option>
+      <option value="A" ${grade === "A" ? "selected" : ""}>A (9)</option>
+      <option value="B" ${grade === "B" ? "selected" : ""}>B (8)</option>
+      <option value="C" ${grade === "C" ? "selected" : ""}>C (7)</option>
+      <option value="D" ${grade === "D" ? "selected" : ""}>D (6)</option>
+      <option value="F" ${grade === "F" ? "selected" : ""}>F (0)</option>
+    </select>
+    <button type="button" class="remove-btn" onclick="removeSubject(this)">×</button>
+  `;
+
+  document.getElementById("subjects-container").appendChild(div);
+  calculateGPA();
 }
 
 function removeSubject(btn) {
-    btn.parentElement.remove();
-    calculateGPA();
+  btn.parentElement.remove();
+  calculateGPA();
 }
 
-// --- Business Logic: GPA Calculation ---
+/************* GPA *************/
 function calculateGPA() {
-    const grades = document.querySelectorAll('.sub-grade');
-    let totalPoints = 0;
-    let count = 0;
+  let total = 0;
+  let count = 0;
 
-    grades.forEach(select => {
-        totalPoints += GRADE_POINTS[select.value];
-        count++;
-    });
+  document.querySelectorAll(".sub-grade").forEach(sel => {
+    total += GRADE_POINTS[sel.value];
+    count++;
+  });
 
-    const gpa = count === 0 ? 0 : (totalPoints / count).toFixed(2);
-    document.getElementById('gpa-calc').innerText = gpa;
-    return gpa;
+  const gpa = count === 0 ? "0.0" : (total / count).toFixed(2);
+  document.getElementById("gpa-calc").innerText = gpa;
+  return gpa;
 }
 
+/************* SAVE (FIXED) *************/
 function saveStudent() {
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const classVal = document.getElementById('classVal').value;
-    
-    // Gather Subject Data
-    const subjectRows = document.querySelectorAll('.subject-row');
-    const subjects = [];
-    
-    subjectRows.forEach(row => {
-        const subName = row.querySelector('.sub-name').value;
-        const grade = row.querySelector('.sub-grade').value;
-        if(subName) subjects.push({ subName, grade });
-    });
+  const nameVal = document.getElementById("name").value.trim();
+  const emailVal = document.getElementById("email").value.trim();
+  const classValVal = document.getElementById("classVal").value.trim();
 
-    const gpa = calculateGPA(); // Get final GPA
+  if (!nameVal || !emailVal || !classValVal) {
+    alert("Please fill all fields");
+    return;
+  }
 
-    const studentData = { name, email, classVal, subjects, gpa };
+  const subjects = [];
+  document.querySelectorAll(".subject-row").forEach(row => {
+    const subName = row.querySelector(".sub-name").value;
+    const grade = row.querySelector(".sub-grade").value;
+    if (subName) subjects.push({ subName, grade });
+  });
 
-    if (isEditing) {
-        students[editingIndex] = studentData;
-        showToast("Student updated successfully");
-    } else {
-        students.push(studentData);
-        showToast("Student added successfully");
-    }
+  const studentData = {
+    name: nameVal,
+    email: emailVal,
+    classVal: classValVal,
+    subjects,
+    gpa: calculateGPA()
+  };
 
-    localStorage.setItem('students', JSON.stringify(students));
-    closeModal();
-    renderTable();
-    updateStats();
+  if (isEditing) {
+    db.collection("students").doc(editingId).update(studentData);
+    showToast("Student updated");
+  } else {
+    db.collection("students").add(studentData);
+    showToast("Student added");
+  }
+
+  closeModal();
 }
 
-function deleteStudent(index) {
-    if(confirm('Delete this student?')) {
-        students.splice(index, 1);
-        localStorage.setItem('students', JSON.stringify(students));
-        renderTable();
-        updateStats();
-        showToast("Student deleted");
-    }
+/************* DELETE *************/
+function deleteStudent(id) {
+  if (confirm("Delete this student?")) {
+    db.collection("students").doc(id).delete();
+    showToast("Student deleted");
+  }
 }
 
-// --- Render & UI ---
-function renderTable(data = students) {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '';
+/************* TABLE *************/
+function renderTable(list = students) {
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
 
-    if (data.length === 0) {
-        document.getElementById('empty-state').style.display = 'block';
-        return;
-    }
-    document.getElementById('empty-state').style.display = 'none';
+  if (list.length === 0) {
+    document.getElementById("empty-state").style.display = "block";
+    return;
+  }
+  document.getElementById("empty-state").style.display = "none";
 
-    data.forEach((student, index) => {
-        // Create subject summary (e.g., "Math: A, Science: S")
-        const subSummary = student.subjects.map(s => `${s.subName}: ${s.grade}`).join(', ');
-        
-        // Determine badge color
-        let badgeClass = 'badge-success';
-        if (student.gpa < 6) badgeClass = 'badge-danger';
-        else if (student.gpa < 8) badgeClass = 'badge-warning';
+  list.forEach((s, i) => {
+    const subjectText = s.subjects
+      .map(sub => `${sub.subName}: ${sub.grade}`)
+      .join(", ");
 
-        const row = `
-            <tr>
-                <td>#${index + 1}</td>
-                <td><strong>${student.name}</strong><br><small style="color:#888">${student.email}</small></td>
-                <td>${student.classVal}</td>
-                <td style="max-width: 200px; font-size: 0.85rem; color: #555;">${subSummary}</td>
-                <td><span class="badge ${badgeClass}">${student.gpa}</span></td>
-                <td>
-                    <button class="btn btn-secondary" onclick="openModal(true, ${index})"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-secondary" style="color:red" onclick="deleteStudent(${index})"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
-    });
+    tbody.innerHTML += `
+      <tr>
+        <td>#${i + 1}</td>
+        <td><strong>${s.name}</strong><br><small>${s.email}</small></td>
+        <td>${s.classVal}</td>
+        <td>${subjectText}</td>
+        <td>${s.gpa}</td>
+        <td>
+          <button onclick="openModal(true,'${s.id}')">✏️</button>
+          <button onclick="deleteStudent('${s.id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
 }
 
+/************* STATS *************/
 function updateStats() {
-    const total = students.length;
-    
-    let totalGPA = 0;
-    let topStudentName = '-';
-    let maxGPA = -1;
+  document.getElementById("total-students").innerText = students.length;
 
-    students.forEach(s => {
-        const currentGPA = parseFloat(s.gpa);
-        totalGPA += currentGPA;
-        if (currentGPA > maxGPA) {
-            maxGPA = currentGPA;
-            topStudentName = s.name;
-        }
-    });
+  if (students.length === 0) {
+    document.getElementById("avg-gpa").innerText = "0.0";
+    document.getElementById("top-student").innerText = "-";
+    return;
+  }
 
-    const avgGPA = total > 0 ? (totalGPA / total).toFixed(2) : 0;
+  let total = 0;
+  let top = students[0];
 
-    document.getElementById('total-students').innerText = total;
-    document.getElementById('avg-gpa').innerText = avgGPA;
-    document.getElementById('top-student').innerText = topStudentName;
+  students.forEach(s => {
+    total += parseFloat(s.gpa);
+    if (parseFloat(s.gpa) > parseFloat(top.gpa)) top = s;
+  });
+
+  document.getElementById("avg-gpa").innerText =
+    (total / students.length).toFixed(2);
+  document.getElementById("top-student").innerText = top.name;
 }
 
+/************* SEARCH *************/
 function handleSearch() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    const filtered = students.filter(s => s.name.toLowerCase().includes(query));
-    renderTable(filtered);
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  renderTable(students.filter(s => s.name.toLowerCase().includes(q)));
 }
 
+/************* TOAST *************/
 function showToast(msg) {
-    const t = document.getElementById("toast");
-    t.innerText = msg;
-    t.className = "toast show";
-    setTimeout(() => t.className = t.className.replace("show", ""), 3000);
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.className = "toast show";
+  setTimeout(() => (t.className = "toast"), 3000);
 }
