@@ -4,119 +4,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Student Dashboard</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="main-content">
-        <header>
-            <h1><i class="fas fa-graduation-cap"></i> EduAdmin Pro</h1>
-            <div class="user-profile">
-                <span>Admin</span>
-                <div class="avatar"><i class="fas fa-user"></i></div>
-            </div>
-        </header>
+<div class="main-content">
+    <header>
+        <h1><i class="fas fa-graduation-cap"></i> EduAdmin Pro</h1>
+        <div class="user-profile">
+            <span>Admin</span>
+            <div class="avatar"><i class="fas fa-user"></i></div>
+        </div>
+    </header>
 
-        <div class="stats-container">
-            <div class="card">
-                <div class="card-info">
-                    <h3>Total Students</h3>
-                    <p id="total-students">0</p>
-                </div>
-                <div class="card-icon style-1"><i class="fas fa-users"></i></div>
+    <div class="stats-container">
+        <div class="card">
+            <div class="card-info">
+                <h3>Total Students</h3>
+                <p id="total-students">0</p>
             </div>
-            <div class="card">
-                <div class="card-info">
-                    <h3>Class Avg GPA</h3>
-                    <p id="avg-gpa">0.0</p>
-                </div>
-                <div class="card-icon style-2"><i class="fas fa-chart-pie"></i></div>
-            </div>
-            <div class="card">
-                <div class="card-info">
-                    <h3>Top GPA</h3>
-                    <p id="top-student">-</p>
-                </div>
-                <div class="card-icon style-3"><i class="fas fa-medal"></i></div>
-            </div>
+            <div class="card-icon style-1"><i class="fas fa-users"></i></div>
         </div>
 
-        <div class="controls">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search student..." onkeyup="handleSearch()">
+        <div class="card">
+            <div class="card-info">
+                <h3>Class Avg GPA</h3>
+                <p id="avg-gpa">0.0</p>
             </div>
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="openModal()"><i class="fas fa-plus"></i> Add Student</button>
-            </div>
+            <div class="card-icon style-2"><i class="fas fa-chart-pie"></i></div>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Class</th>
-                        <th>Subjects</th>
-                        <th>GPA</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-            <div id="empty-state" class="empty-state" style="display: none;">
-                <i class="fas fa-folder-open"></i>
-                <p>No records found.</p>
+        <div class="card">
+            <div class="card-info">
+                <h3>Top GPA</h3>
+                <p id="top-student">-</p>
             </div>
+            <div class="card-icon style-3"><i class="fas fa-medal"></i></div>
         </div>
     </div>
 
-    <div id="studentModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Student Details</h2>
-                <span class="close" onclick="closeModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="studentForm" onsubmit="event.preventDefault(); saveStudent();">
-                    <input type="hidden" id="studentId">
-                    
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" id="name" required placeholder="e.g. John Doe">
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" id="email" required placeholder="john@email.com">
-                        </div>
-                        <div class="form-group">
-                            <label>Class/Section</label>
-                            <input type="text" id="classVal" required placeholder="e.g. 10-A">
-                        </div>
-                    </div>
-
-                    <div class="separator">
-                        <span>Academic Performance</span>
-                        <button type="button" class="btn-small" onclick="addSubjectField()">+ Add Subject</button>
-                    </div>
-
-                    <div id="subjects-container">
-                        </div>
-
-                    <div class="modal-footer">
-                        <div class="gpa-preview">Calculated GPA: <span id="gpa-calc">0.0</span></div>
-                        <button type="submit" class="btn btn-primary">Save Record</button>
-                    </div>
-                </form>
-            </div>
+    <div class="controls">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search student..." onkeyup="handleSearch()">
         </div>
+        <button class="btn btn-primary" onclick="openModal()">
+            <i class="fas fa-plus"></i> Add Student
+        </button>
     </div>
 
-    <div id="toast" class="toast">Notification</div>
-    <script src="script.js"></script>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Subjects</th>
+                    <th>GPA</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+
+        <div id="empty-state" class="empty-state" style="display:none;">
+            <i class="fas fa-folder-open"></i>
+            <p>No records found.</p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div id="studentModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Student Details</h2>
+            <span class="close" onclick="closeModal()">&times;</span>
+        </div>
+
+        <form id="studentForm" onsubmit="event.preventDefault(); saveStudent();">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="name" required>
+            </div>
+
+            <div class="row">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Class</label>
+                    <input type="text" id="classVal" required>
+                </div>
+            </div>
+
+            <div class="separator">
+                <span>Subjects</span>
+                <button type="button" class="btn-small" onclick="addSubjectField()">+ Add</button>
+            </div>
+
+            <div id="subjects-container"></div>
+
+            <div class="modal-footer">
+                <div class="gpa-preview">
+                    Calculated GPA: <span id="gpa-calc">0.0</span>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast">Notification</div>
+
+<!-- 🔥 FIREBASE SDKs (REQUIRED) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- YOUR SCRIPT -->
+<script src="script.js"></script>
+
 </body>
 </html>
